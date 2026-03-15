@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { 
-  MoreVertical, Edit, Trash2, Check,
+  MoreVertical, Edit, Trash2,
   Circle, Star, Heart, Zap, Target, Award, BookOpen, Dumbbell,
   Sun, Moon, Coffee, Droplets, Flame, Music, Bike, Brain,
   type LucideIcon
@@ -11,6 +11,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StreakBadge } from './streak-badge'
+import { HabitCompletionButton } from './habit-completion-button'
 import { Habit } from '@/types/habits'
 import { useHabitStreak } from '@/hooks/use-habits'
 import { cn } from '@/lib/utils'
@@ -128,17 +129,13 @@ export function HabitCard({
 
           <div className="flex items-center gap-2">
             {onToggle && (
-              <button
-                onClick={onToggle}
-                className={cn(
-                  'flex items-center justify-center h-10 w-10 rounded-lg border-2 transition-all',
-                  isCompleted
-                    ? 'bg-primary border-primary text-primary-foreground'
-                    : 'border-input hover:border-primary hover:bg-accent'
-                )}
-              >
-                {isCompleted && <Check className="h-5 w-5" />}
-              </button>
+              <HabitCompletionButton
+                habitId={habit.id}
+                habitName={habit.name}
+                isCompleted={isCompleted}
+                isStrictMode={Boolean((habit as Habit & { strict_mode?: boolean }).strict_mode)}
+                onToggle={onToggle}
+              />
             )}
 
             {showActions && (onEdit || onDelete) && (
@@ -146,7 +143,11 @@ export function HabitCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setShowMenu(!showMenu)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setShowMenu(!showMenu)
+                  }}
                   className="h-8 w-8"
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -156,12 +157,28 @@ export function HabitCard({
                   <>
                     <div
                       className="fixed inset-0 z-[100]"
-                      onClick={() => setShowMenu(false)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setShowMenu(false)
+                      }}
                     />
-                    <div className="absolute right-0 top-full mt-1 w-32 bg-popover border rounded-md shadow-lg z-[101] py-1">
+                    <div
+                      className="absolute right-0 top-full mt-1 w-32 bg-popover border rounded-md shadow-lg z-[9999] py-1"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                      }}
+                    >
                       {onEdit && (
                         <button
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
                             onEdit()
                             setShowMenu(false)
                           }}
@@ -173,7 +190,13 @@ export function HabitCard({
                       )}
                       {onDelete && (
                         <button
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
                             onDelete()
                             setShowMenu(false)
                           }}

@@ -11,7 +11,9 @@ export function generateEODEmailHTML(
   aiMessage: string,
   quote: { quote: string; author: string },
   onePercentMessage: string,
-  reminders: PersonalReminder[]
+  reminders: PersonalReminder[],
+  goalInsights?: string,
+  expenseHTML?: string
 ): string {
   const firstName = userName.split(' ')[0] || userName
   const completionRate = summary.totalHabits > 0 
@@ -116,6 +118,10 @@ export function generateEODEmailHTML(
     </div>
     ` : ''}
 
+    ${goalInsights || ''}
+${expenseHTML || ''}
+
+    
     <div class="quote">
       <p>"${quote.quote}"</p>
       <cite>— ${quote.author}</cite>
@@ -141,7 +147,8 @@ export function generateMorningEmailHTML(
   quote: { quote: string; author: string },
   onePercentMessage: string,
   reminders: PersonalReminder[],
-  yesterdaySummary?: { habitsCompleted: number; totalHabits: number }
+  yesterdaySummary?: { habitsCompleted: number; totalHabits: number },
+  goalInsights?: string
 ): string {
   const firstName = userName.split(' ')[0] || userName
 
@@ -204,6 +211,10 @@ export function generateMorningEmailHTML(
       `).join('')}
     </div>
     ` : ''}
+
+    ${goalInsights || ''}
+
+    ${expenseHTML || ''}
 
     <div class="one-percent">
       <p>${onePercentMessage}</p>

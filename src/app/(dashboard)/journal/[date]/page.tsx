@@ -3,7 +3,7 @@
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { ArrowLeft, Save, Trash2, Star } from 'lucide-react'
+import { ArrowLeft, Save, Trash2, Star, Brain, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,6 +36,8 @@ export default function JournalEntryPage({ params }: { params: Promise<{ date: s
   const [tags, setTags] = useState<string[]>([])
   const [isFavorite, setIsFavorite] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false)
+  const [reviewStatus, setReviewStatus] = useState('')
 
   useEffect(() => {
     if (entry) {
@@ -68,6 +70,7 @@ export default function JournalEntryPage({ params }: { params: Promise<{ date: s
             is_favorite: isFavorite,
           },
         })
+        alert('✅ Journal entry updated!')
       } else {
         await createMutation.mutateAsync({
           user_id: user.id,
@@ -78,9 +81,11 @@ export default function JournalEntryPage({ params }: { params: Promise<{ date: s
           tags,
           is_favorite: isFavorite,
         })
+        alert('✅ Journal entry saved!')
       }
     } catch (err: any) {
       console.error('Save failed:', err?.message ?? err)
+      alert('❌ Failed to save journal entry')
     } finally {
       setIsSaving(false)
     }
@@ -92,6 +97,124 @@ export default function JournalEntryPage({ params }: { params: Promise<{ date: s
     if (confirm('Delete this journal entry? This action cannot be undone.')) {
       await deleteMutation.mutateAsync(entry.id)
       router.push('/journal')
+    }
+  }
+
+  const handleAIReview = async () => {
+    if (!entry) {
+      alert('Please save your journal entry first')
+      return
+    }
+
+    setIsGeneratingReview(true)
+    setReviewStatus('Analyzing your day...')
+
+    try {
+      const response = await fetch('/api/ai/journal-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ journalId: entry.id }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Review failed')
+      }
+
+      setReviewStatus('Generating life insights...')
+      
+      const result = await response.json()
+
+      setReviewStatus('Sending your personal report...')
+      
+      setTimeout(() => {
+        alert('✅ AI Life Review sent to your email!')
+        setIsGeneratingReview(false)
+        setReviewStatus('')
+      }, 1000)
+    } catch (error) {
+      console.error('AI Review error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to generate review')
+      setIsGeneratingReview(false)
+      setReviewStatus('')
+    }
+  }
+
+  const handleSaveAndReview = async () => {
+    if (!user || isContentEmpty(content)) return
+
+    // First save the entry
+    setIsSaving(true)
+    try {
+      let savedEntryId: string
+      
+      if (entry) {
+        await updateMutation.mutateAsync({
+          id: entry.id,
+          updates: {
+            title: title || null,
+            content,
+            mood,
+            tags,
+            is_favorite: isFavorite,
+          },
+        })
+        savedEntryId = entry.id
+      } else {
+        const newEntry = await createMutation.mutateAsync({
+          user_id: user.id,
+          entry_date: date,
+          title: title || null,
+          content,
+          mood,
+          tags,
+          is_favorite: isFavorite,
+        })
+        savedEntryId = newEntry.id
+      }
+      
+      setIsSaving(false)
+      
+      // Wait a moment for the save to complete and data to refresh
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Then trigger AI review with the saved entry ID
+      setIsGeneratingReview(true)
+      setReviewStatus('Analyzing your day...')
+
+      try {
+        const response = await fetch('/api/ai/journal-review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ journalId: savedEntryId }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Review failed')
+        }
+
+        setReviewStatus('Generating life insights...')
+        
+        await response.json()
+
+        setReviewStatus('Sending your personal report...')
+        
+        setTimeout(() => {
+          alert('✅ AI Life Review sent to your email!')
+          setIsGeneratingReview(false)
+          setReviewStatus('')
+        }, 1000)
+      } catch (error) {
+        console.error('AI Review error:', error)
+        alert(error instanceof Error ? error.message : 'Failed to generate review')
+        setIsGeneratingReview(false)
+        setReviewStatus('')
+      }
+    } catch (err: any) {
+      console.error('Save failed:', err?.message ?? err)
+      alert('Failed to save journal entry')
+      setIsSaving(false)
     }
   }
 
@@ -135,9 +258,29 @@ export default function JournalEntryPage({ params }: { params: Promise<{ date: s
               Delete
             </Button>
           )}
-          <Button onClick={handleSave} disabled={isSaving || isContentEmpty(content)}>
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving || isContentEmpty(content) || isGeneratingReview}
+            variant="outline"
+          >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? 'Saving...' : 'Save Journal'}
+          </Button>
+          <Button 
+            onClick={handleSaveAndReview} 
+            disabled={isSaving || isContentEmpty(content) || isGeneratingReview}
+          >
+            {isGeneratingReview ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {reviewStatus}
+              </>
+            ) : (
+              <>
+                <Brain className="h-4 w-4 mr-2" />
+                Submit + AI Review
+              </>
+            )}
           </Button>
         </div>
       </div>

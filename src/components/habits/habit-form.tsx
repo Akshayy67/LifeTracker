@@ -13,9 +13,11 @@ import { useAuth } from '@/providers/auth-provider'
 import {
   Circle, Star, Heart, Zap, Target, Award, BookOpen, Dumbbell,
   Sun, Moon, Coffee, Droplets, Flame, Music, Bike, Brain, Image as ImageIcon, Loader2,
-  type LucideIcon
+  Camera, type LucideIcon
 } from 'lucide-react'
 import { searchUnsplashImages, getHabitImageQuery, UnsplashImage, triggerUnsplashDownload } from '@/lib/unsplash'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 
 const habitSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -25,6 +27,8 @@ const habitSchema = z.object({
   color: z.string(),
   icon: z.string(),
   background_image: z.string().optional(),
+  strict_mode: z.boolean().default(false),
+  verification_prompt: z.string().max(500).optional(),
 })
 
 type HabitFormData = z.infer<typeof habitSchema>
@@ -107,6 +111,8 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
       color: habit?.color || '#3b82f6',
       icon: habit?.icon || 'circle',
       background_image: habit?.background_image || '',
+      strict_mode: habit?.strict_mode || false,
+      verification_prompt: habit?.verification_prompt || '',
     },
   })
 
@@ -115,6 +121,7 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
   const frequency = watch('frequency')
   const habitName = watch('name')
   const backgroundImage = watch('background_image')
+  const strictMode = watch('strict_mode')
 
   const fetchImages = async () => {
     if (!habitName) return
@@ -249,6 +256,45 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
               })}
             </div>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-5 w-5 text-primary" />
+                  <Label htmlFor="strict_mode" className="text-base font-semibold cursor-pointer">
+                    Strict Mode
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Require photo verification with AI validation before marking complete
+                </p>
+              </div>
+              <Switch
+                id="strict_mode"
+                checked={strictMode}
+                onCheckedChange={(checked) => setValue('strict_mode', checked)}
+              />
+            </div>
+          </div>
+
+          {strictMode && (
+            <div className="space-y-2 pl-4 border-l-2 border-primary">
+              <Label htmlFor="verification_prompt">Verification Instructions (Optional)</Label>
+              <Textarea
+                id="verification_prompt"
+                placeholder="e.g., Look for: gym equipment in use, workout clothes, active exercise. The photo should show genuine workout activity, not just gym arrival."
+                {...register('verification_prompt')}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                Tell the AI what to look for in verification photos. Leave empty for auto-generated prompts based on habit name.
+              </p>
+              {errors.verification_prompt && (
+                <p className="text-sm text-destructive">{errors.verification_prompt.message}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Background Image (Optional)</Label>

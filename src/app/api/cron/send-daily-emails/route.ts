@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, getMotivationalQuote, calculate1PercentImprovement } from '@/lib/email'
 import { generateMotivationalMessage, DailySummary } from '@/lib/ai'
 import { generateEODEmailHTML, generateMorningEmailHTML } from '@/lib/email-templates'
+import { analyzeExpenses, generateExpenseEmailHTML } from '@/lib/expense-ai'
 import { differenceInDays, format } from 'date-fns'
 
 // This endpoint should be called by a cron service (Vercel Cron, GitHub Actions, etc.)

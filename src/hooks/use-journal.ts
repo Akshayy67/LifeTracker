@@ -101,6 +101,7 @@ export function useUpdateJournalEntry() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['journal-entries'] })
       queryClient.invalidateQueries({ queryKey: ['journal-entry', data.entry_date] })
+      queryClient.refetchQueries({ queryKey: ['journal-entry', data.entry_date] })
     },
   })
 }

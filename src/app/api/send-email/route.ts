@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendEmail, getMotivationalQuote, calculate1PercentImprovement } from '@/lib/email'
 import { generateMotivationalMessage, DailySummary } from '@/lib/ai'
 import { generateEODEmailHTML, generateMorningEmailHTML } from '@/lib/email-templates'
+import { generateGoalEmailInsights } from '@/lib/goal-ai'
 import { differenceInDays } from 'date-fns'
 
 export async function POST(request: Request) {
@@ -94,6 +95,25 @@ export async function POST(request: Request) {
       )
     }
 
+    // Generate goal insights if enabled
+    let goalInsights = ''
+    if (profile.goal_email_insights_enabled) {
+      try {
+        goalInsights = await generateGoalEmailInsights(user.id)
+      } catch (error) {
+        console.error('Error generating goal insights:', error)
+      }
+    }
+
+    // Generate expense analysis
+    let expenseHTML = ''
+    try {
+      const expenseAnalysis = await analyzeExpenses(user.id)
+      expenseHTML = generateExpenseEmailHTML(expenseAnalysis)
+    } catch (error) {
+      console.error('Error generating expense analysis:', error)
+    }
+
     // Generate email HTML
     const html = type === 'eod'
       ? generateEODEmailHTML(
@@ -102,14 +122,19 @@ export async function POST(request: Request) {
           aiMessage,
           quote,
           onePercentMessage,
-          reminders || []
+          reminders || [],
+          goalInsights,
+          expenseHTML
         )
       : generateMorningEmailHTML(
           profile.full_name || profile.email,
           aiMessage,
           quote,
           onePercentMessage,
-          reminders || []
+          reminders || [],
+          undefined,
+          goalInsights,
+          expenseHTML
         )
 
     // Send email
