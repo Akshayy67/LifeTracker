@@ -52,6 +52,7 @@ export default function BudgetsPage() {
         category_id: selectedCategoryId,
         amount: parseFloat(amount),
         period: 'monthly',
+        start_date: today.toISOString().split('T')[0],
         active: true,
       })
     }
@@ -64,7 +65,7 @@ export default function BudgetsPage() {
 
   const handleEdit = (budget: Budget) => {
     setEditingBudget(budget)
-    setSelectedCategoryId(budget.category_id)
+    setSelectedCategoryId(budget.category_id || '')
     setAmount(budget.amount.toString())
     setShowForm(true)
   }

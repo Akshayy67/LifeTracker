@@ -109,7 +109,7 @@ export default function JournalPage() {
                         />
                         {entry.tags && entry.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {entry.tags.map((tag, idx) => (
+                            {entry.tags.map((tag: string, idx: number) => (
                               <span
                                 key={idx}
                                 className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
