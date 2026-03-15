@@ -111,31 +111,47 @@ export function useDeleteJournalEntry() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // 1. Get all images for this entry
+      // 1. First delete all associated images from storage and database
       const { data: images } = await supabase
         .from('journal_images')
         .select('id, storage_path')
         .eq('journal_entry_id', id)
 
-      // 2. Delete files from storage
       if (images && images.length > 0) {
         const paths = images.map(img => img.storage_path)
-        await supabase.storage.from('journal-images').remove(paths)
+        
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+          .from('journal-images')
+          .remove(paths)
+        
+        if (storageError) {
+          console.error('Storage deletion error:', storageError)
+          throw storageError
+        }
 
-        // 3. Delete image DB records
-        await supabase
+        // Delete from database
+        const { error: dbError } = await supabase
           .from('journal_images')
           .delete()
           .eq('journal_entry_id', id)
+        
+        if (dbError) {
+          console.error('Database image deletion error:', dbError)
+          throw dbError
+        }
       }
 
-      // 4. Delete the journal entry
+      // 2. Delete the journal entry
       const { error } = await supabase
         .from('journal_entries')
         .delete()
         .eq('id', id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Journal entry deletion error:', error)
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journal-entries'] })

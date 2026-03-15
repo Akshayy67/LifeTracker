@@ -31,12 +31,11 @@ CREATE POLICY "Users can upload own journal images"
         AND auth.uid()::text = (storage.foldername(name))[1]
     );
 
--- Policy: Users can view their own images
-CREATE POLICY "Users can view own journal images"
+-- Policy: Anyone can view journal images (public bucket)
+CREATE POLICY "Anyone can view journal images"
     ON storage.objects FOR SELECT
     USING (
-        bucket_id = 'journal-images' 
-        AND auth.uid()::text = (storage.foldername(name))[1]
+        bucket_id = 'journal-images'
     );
 
 -- Policy: Users can update their own images
