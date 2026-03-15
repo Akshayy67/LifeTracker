@@ -13,7 +13,7 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES (
     'journal-images',
     'journal-images',
-    false, -- Private bucket
+    true, -- Public bucket for easier access
     5242880, -- 5MB limit
     ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
 )
