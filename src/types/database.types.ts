@@ -21,6 +21,13 @@ export interface Database {
           full_name: string | null
           avatar_url: string | null
           timezone: string
+          email_notifications_enabled: boolean
+          morning_email_enabled: boolean
+          morning_email_time: string
+          eod_email_enabled: boolean
+          eod_email_time: string
+          motivational_quotes_enabled: boolean
+          ai_personalization_enabled: boolean
           created_at: string
           updated_at: string
         }
@@ -30,6 +37,13 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           timezone?: string
+          email_notifications_enabled?: boolean
+          morning_email_enabled?: boolean
+          morning_email_time?: string
+          eod_email_enabled?: boolean
+          eod_email_time?: string
+          motivational_quotes_enabled?: boolean
+          ai_personalization_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -39,6 +53,13 @@ export interface Database {
           full_name?: string | null
           avatar_url?: string | null
           timezone?: string
+          email_notifications_enabled?: boolean
+          morning_email_enabled?: boolean
+          morning_email_time?: string
+          eod_email_enabled?: boolean
+          eod_email_time?: string
+          motivational_quotes_enabled?: boolean
+          ai_personalization_enabled?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -62,6 +83,7 @@ export interface Database {
           frequency: 'daily' | 'weekly' | 'monthly'
           target_count: number
           active: boolean
+          background_image: string | null
           archived_at: string | null
           created_at: string
           updated_at: string
@@ -76,6 +98,7 @@ export interface Database {
           frequency: 'daily' | 'weekly' | 'monthly'
           target_count?: number
           active?: boolean
+          background_image?: string | null
           archived_at?: string | null
           created_at?: string
           updated_at?: string
@@ -90,6 +113,7 @@ export interface Database {
           frequency?: 'daily' | 'weekly' | 'monthly'
           target_count?: number
           active?: boolean
+          background_image?: string | null
           archived_at?: string | null
           created_at?: string
           updated_at?: string
@@ -278,6 +302,49 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "expense_categories_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      personal_reminders: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          description: string | null
+          reminder_time: string
+          days_of_week: number[]
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          description?: string | null
+          reminder_time: string
+          days_of_week?: number[]
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          description?: string | null
+          reminder_time?: string
+          days_of_week?: number[]
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_reminders_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]

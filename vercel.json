@@ -3,5 +3,15 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["iad1"]
+  "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/cron/send-daily-emails?type=morning",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/send-daily-emails?type=eod",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

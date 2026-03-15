@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -12,9 +12,10 @@ import { Habit, HabitFrequency } from '@/types/habits'
 import { useAuth } from '@/providers/auth-provider'
 import {
   Circle, Star, Heart, Zap, Target, Award, BookOpen, Dumbbell,
-  Sun, Moon, Coffee, Droplets, Flame, Music, Bike, Brain,
+  Sun, Moon, Coffee, Droplets, Flame, Music, Bike, Brain, Image as ImageIcon, Loader2,
   type LucideIcon
 } from 'lucide-react'
+import { searchUnsplashImages, getHabitImageQuery, UnsplashImage, triggerUnsplashDownload } from '@/lib/unsplash'
 
 const habitSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
@@ -23,6 +24,7 @@ const habitSchema = z.object({
   target_count: z.number().min(1).max(100),
   color: z.string(),
   icon: z.string(),
+  background_image: z.string().optional(),
 })
 
 type HabitFormData = z.infer<typeof habitSchema>
@@ -85,6 +87,9 @@ const ICONS = [
 export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
   const { user } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showImagePicker, setShowImagePicker] = useState(false)
+  const [unsplashImages, setUnsplashImages] = useState<UnsplashImage[]>([])
+  const [loadingImages, setLoadingImages] = useState(false)
 
   const {
     register,
@@ -101,12 +106,31 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
       target_count: habit?.target_count || 1,
       color: habit?.color || '#3b82f6',
       icon: habit?.icon || 'circle',
+      background_image: habit?.background_image || '',
     },
   })
 
   const selectedColor = watch('color')
   const selectedIcon = watch('icon')
   const frequency = watch('frequency')
+  const habitName = watch('name')
+  const backgroundImage = watch('background_image')
+
+  const fetchImages = async () => {
+    if (!habitName) return
+    
+    setLoadingImages(true)
+    const query = getHabitImageQuery(habitName)
+    const images = await searchUnsplashImages(query, 6)
+    setUnsplashImages(images)
+    setLoadingImages(false)
+  }
+
+  const selectImage = (image: UnsplashImage) => {
+    setValue('background_image', image.urls.regular)
+    triggerUnsplashDownload(image.links.download_location)
+    setShowImagePicker(false)
+  }
 
   const handleFormSubmit = async (data: HabitFormData) => {
     setIsSubmitting(true)
@@ -223,6 +247,85 @@ export function HabitForm({ habit, onSubmit, onCancel }: HabitFormProps) {
                   </button>
                 )
               })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Background Image (Optional)</Label>
+            <div className="space-y-3">
+              {backgroundImage ? (
+                <div className="relative aspect-video rounded-lg overflow-hidden border">
+                  <img
+                    src={backgroundImage}
+                    alt="Selected background"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setValue('background_image', '')}
+                    className="absolute top-2 right-2 bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-sm hover:bg-destructive/90"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowImagePicker(!showImagePicker)
+                    if (!showImagePicker && unsplashImages.length === 0) {
+                      fetchImages()
+                    }
+                  }}
+                  className="w-full"
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  {showImagePicker ? 'Hide Image Picker' : 'Add Background Image'}
+                </Button>
+              )}
+
+              {showImagePicker && (
+                <div className="space-y-3">
+                  {loadingImages ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : unsplashImages.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {unsplashImages.map((image) => (
+                        <button
+                          key={image.id}
+                          type="button"
+                          onClick={() => selectImage(image)}
+                          className="relative aspect-video rounded-md overflow-hidden border hover:border-primary transition-colors group"
+                        >
+                          <img
+                            src={image.urls.small}
+                            alt={image.alt_description || 'Unsplash image'}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Enter a habit name to see suggested images
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Photos from{' '}
+                    <a
+                      href="https://unsplash.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      Unsplash
+                    </a>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

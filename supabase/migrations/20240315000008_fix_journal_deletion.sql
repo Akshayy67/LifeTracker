@@ -41,7 +41,3 @@ CREATE POLICY "Users can delete own journal images"
 UPDATE storage.buckets 
 SET public = true 
 WHERE id = 'journal-images';
-
--- Comment on the changes
-COMMENT ON STORAGE BUCKET journal-images IS 
-    'Public bucket for journal images with simplified RLS policies for reliable deletion';

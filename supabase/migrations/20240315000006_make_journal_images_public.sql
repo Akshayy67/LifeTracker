@@ -17,7 +17,3 @@ CREATE POLICY "Anyone can view journal images"
     USING (
         bucket_id = 'journal-images'
     );
-
--- Comment on the change
-COMMENT ON STORAGE BUCKET journal-images IS 
-    'Public bucket for journal images - images are accessible via public URLs but controlled by RLS policies at database level';
